@@ -151,13 +151,10 @@ public class ShowSensors extends AppCompatActivity implements SensorEventListene
         //Gets last known location.
         //Location Fields
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_LOCATION);
-            }
-        }
+
+
+
+
         loc = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 
 
@@ -180,7 +177,9 @@ public class ShowSensors extends AppCompatActivity implements SensorEventListene
 
         Runnable runnable = () -> {
             try {
-                getRaDec();
+                getRaDec(getApplicationContext());
+
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -190,6 +189,8 @@ public class ShowSensors extends AppCompatActivity implements SensorEventListene
 
 
         raDecToAzAlt(135, 17, loc.getLatitude(), loc.getLongitude());
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.support_simple_spinner_dropdown_item, spinnerList);
+        spinner.setAdapter(adapter);
 
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -203,12 +204,11 @@ public class ShowSensors extends AppCompatActivity implements SensorEventListene
                     rpyTextView.setText("Az: " + raDec[0] + "\nAlt: " + raDec[1]);
 
                 }
-
-
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
+                rpyTextView.setText(R.string.NotSearching);
 
             }
         });
@@ -313,7 +313,7 @@ public class ShowSensors extends AppCompatActivity implements SensorEventListene
 
     }
 
-    private void getRaDec() throws IOException {
+    private void getRaDec(Context applicationContext) throws IOException {
         //http://archive.eso.org/programmatic/#TAP
 
         URL url = new URL("https://simbad.u-strasbg.fr/simbad/sim-tap//sync?REQUEST=doQuery&FORMAT=TEXT&LANG=ADQL&MAXREC=200&QUERY=++++++++SELECT%0D%0A++++++++++++++++id%2C%0D%0A++++++++++++++++RA%2C%0D%0A++++++++++++++++DEC%2C%0D%0A++++++++++++++++update_date%0D%0A%0D%0A++++++++FROM+basic+JOIN+ident+ON+oidref+%3D+oid%0D%0A%0D%0A++++++++WHERE+id+in+('polaris'%2C+'orion'%2C+'sirius'%2C+'andromeda'%2C+'deneb'%2C+'altair'%2C'betelgeuse'%2C'Rigel'%2C+'Vega'%2C'Pleiades'%2C+'Antares'%2C'Canopus'%2C'NGC+5139'%2C+'NGC+4755'%2C+'NGC+3372'%2C+'Aldebaran'%2C+'M45'+)");
@@ -330,15 +330,18 @@ public class ShowSensors extends AppCompatActivity implements SensorEventListene
             Log.v(MAIN_TAG,urlConnection.getHeaderFields().toString());
             s = new Scanner(cached);
 
-            this.runOnUiThread(() -> Toast.makeText(getApplicationContext(), "Using Cached Data!", Toast.LENGTH_SHORT).show());
+            if(urlConnection.getHeaderFields().toString().contains("NETWORK")){
+                this.runOnUiThread(() -> Toast.makeText(applicationContext, "Using New Data!", Toast.LENGTH_LONG).show());
+            }
 
+            else if(urlConnection.getHeaderFields().toString().contains("CACHE")){
+                this.runOnUiThread(() -> Toast.makeText(applicationContext, "Using Cached Data!", Toast.LENGTH_LONG).show());
+            }
 
 
         } catch (FileNotFoundException e) {
-            Log.v(MAIN_TAG,urlConnection.getHeaderFields().toString());
-            rpyTextView.setText("AHH CACHE ERRORS \nGET ADULT!");
 
-            this.runOnUiThread(() -> Toast.makeText(getApplicationContext(), "AHHH it wasn't cached!", Toast.LENGTH_LONG).show());
+            this.runOnUiThread(() -> Toast.makeText(applicationContext, "AHHH it wasn't cached!", Toast.LENGTH_LONG).show());
 
         }
 
@@ -361,8 +364,7 @@ public class ShowSensors extends AppCompatActivity implements SensorEventListene
 
                 raDecHash.put(sArray[0], raDecToAzAlt(Double.parseDouble(sArray[1]), Double.parseDouble(sArray[2]), loc.getLatitude(), loc.getLongitude()));
             }
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.support_simple_spinner_dropdown_item, spinnerList);
-            spinner.setAdapter(adapter);
+
 
         }
 

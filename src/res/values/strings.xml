@@ -14,4 +14,7 @@
     <string name="NotSearching">Not Searching for Any Stars.</string>
     <string name="notVisible">Is not currently visible. \n</string>
     <string name="offState">Off State</string>
+    <string name="title_activity_permissions">FullscreenActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
 </resources>
